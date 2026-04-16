@@ -1,6 +1,10 @@
 package util
 
-import "github.com/spf13/viper"
+import (
+	"errors"
+
+	"github.com/spf13/viper"
+)
 
 type Config struct {
 	DBDriver      string `mapstructure:"DB_DRIVER"`
@@ -9,16 +13,21 @@ type Config struct {
 }
 
 func LoadConfig(path string) (config Config, err error) {
-	viper.AddConfigPath(path)
-	viper.SetConfigName("app")
-	viper.SetConfigType("env")
+	v := viper.New()
+	v.AddConfigPath(path)
+	v.SetConfigName("app")
+	v.SetConfigType("env")
 
-	viper.AutomaticEnv()
+	v.AutomaticEnv()
 
-	err = viper.ReadInConfig()
+	err = v.ReadInConfig()
 	if err != nil {
-		return
+		var notFoundErr viper.ConfigFileNotFoundError
+		// 允许没有 app.env：此时改从环境变量读取配置。
+		if !errors.As(err, &notFoundErr) {
+			return
+		}
 	}
-	err = viper.Unmarshal(&config)
+	err = v.Unmarshal(&config)
 	return
 }
