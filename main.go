@@ -16,10 +16,13 @@ func main() {
 		log.Fatal("cannot load config:", err)
 	}
 	conn, err := sql.Open(config.DBDriver, config.DBSource)
-	conn.SetMaxOpenConns(20)
-	conn.SetMaxIdleConns(20)
 	if err != nil {
 		log.Fatal("cannot connect to db:", err)
+	}
+	conn.SetMaxOpenConns(20)
+	conn.SetMaxIdleConns(20)
+	if err = conn.Ping(); err != nil {
+		log.Fatal("cannot ping db:", err)
 	}
 
 	store := db.NewStore(conn)

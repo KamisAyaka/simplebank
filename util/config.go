@@ -2,6 +2,7 @@ package util
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/spf13/viper"
 )
@@ -19,6 +20,11 @@ func LoadConfig(path string) (config Config, err error) {
 	v.SetConfigType("env")
 
 	v.AutomaticEnv()
+	for _, key := range []string{"DB_DRIVER", "DB_SOURCE", "SERVER_ADDRESS"} {
+		if bindErr := v.BindEnv(key); bindErr != nil {
+			return config, bindErr
+		}
+	}
 
 	err = v.ReadInConfig()
 	if err != nil {
@@ -28,6 +34,13 @@ func LoadConfig(path string) (config Config, err error) {
 			return
 		}
 	}
-	err = v.Unmarshal(&config)
-	return
+	config = Config{
+		DBDriver:      v.GetString("DB_DRIVER"),
+		DBSource:      v.GetString("DB_SOURCE"),
+		ServerAddress: v.GetString("SERVER_ADDRESS"),
+	}
+	if config.DBDriver == "" || config.DBSource == "" || config.ServerAddress == "" {
+		return config, fmt.Errorf("missing required config: DB_DRIVER/DB_SOURCE/SERVER_ADDRESS")
+	}
+	return config, nil
 }

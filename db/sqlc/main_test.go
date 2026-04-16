@@ -19,11 +19,16 @@ func TestMain(m *testing.M) {
 		log.Fatal("cannot load config:", err)
 	}
 	testDB, err = sql.Open(config.DBDriver, config.DBSource)
-	testDB.SetMaxOpenConns(20)
-	testDB.SetMaxIdleConns(20)
 	if err != nil {
 		log.Fatal("cannot connect to db:", err)
 	}
+	testDB.SetMaxOpenConns(20)
+	testDB.SetMaxIdleConns(20)
+	if err = testDB.Ping(); err != nil {
+		log.Fatal("cannot ping db:", err)
+	}
 	testQueries = New(testDB)
-	os.Exit(m.Run())
+	code := m.Run()
+	_ = testDB.Close()
+	os.Exit(code)
 }
