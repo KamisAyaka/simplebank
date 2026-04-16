@@ -1,6 +1,9 @@
 package util
 
-import "math/rand"
+import (
+	"fmt"
+	"math/rand"
+)
 
 // Go 1.20+ 会自动为 math/rand 的全局随机源播种，
 // 不需要再手动调用 rand.Seed。
@@ -46,4 +49,8 @@ func RandomCurrency() string {
 	currencies := []string{EUR, USD, CAD}
 	n := len(currencies)
 	return currencies[rand.Intn(n)]
+}
+
+func RandomEmail() string {
+	return fmt.Sprintf("%s@gmail.com", RandomString(8))
 }
