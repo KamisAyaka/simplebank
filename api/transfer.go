@@ -12,7 +12,7 @@ type createTransferRequest struct {
 	FromAccountID int64  `json:"from_account_id" binding:"required,min=1"`
 	ToAccountID   int64  `json:"to_account_id" binding:"required,min=1,nefield=FromAccountID"`
 	Amount        int64  `json:"amount" binding:"required,gt=0"`
-	Currency      string `json:"currency" binding:"required,oneof=USD CNY EUR"`
+	Currency      string `json:"currency" binding:"required,currency"`
 }
 
 func (server *Server) createTransfer(ctx *gin.Context) {
@@ -22,13 +22,11 @@ func (server *Server) createTransfer(ctx *gin.Context) {
 		return
 	}
 
-	_, ok := server.validAccount(ctx, req.FromAccountID, req.Currency)
-	if !ok {
+	if !server.validAccount(ctx, req.FromAccountID, req.Currency) {
 		return
 	}
 
-	_, ok = server.validAccount(ctx, req.ToAccountID, req.Currency)
-	if !ok {
+	if !server.validAccount(ctx, req.ToAccountID, req.Currency) {
 		return
 	}
 
@@ -99,23 +97,23 @@ func (server *Server) listTransfers(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, transfers)
 }
 
-func (server *Server) validAccount(ctx *gin.Context, accountID int64, currency string) (db.Account, bool) {
+func (server *Server) validAccount(ctx *gin.Context, accountID int64, currency string) bool {
 	account, err := server.store.GetAccount(ctx, accountID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return account, false
+			return false
 		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return account, false
+		return false
 	}
 
 	if account.Currency != currency {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "account currency mismatch",
 		})
-		return account, false
+		return false
 	}
 
-	return account, true
+	return true
 }

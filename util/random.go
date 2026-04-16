@@ -43,5 +43,7 @@ func RandomBool() bool {
 }
 
 func RandomCurrency() string {
-	return RandomString(3)
+	currencies := []string{EUR, USD, CAD}
+	n := len(currencies)
+	return currencies[rand.Intn(n)]
 }
