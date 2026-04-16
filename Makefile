@@ -1,3 +1,6 @@
+MOCKGEN := $(shell go env GOPATH)/bin/mockgen
+MODULE := $(shell go list -m)
+
 postgres:
 	docker run --name postgre15 -p 5433:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres:15-alpine
 
@@ -22,4 +25,8 @@ test:
 server:
 	go run main.go
 
-.PHONY: createdb postgres dropdb migrateup migratedown sqlc test server
+mock:
+	mkdir -p db/mock
+	$(MOCKGEN) -source=db/sqlc/store.go -destination=db/mock/store_mock.go -package=mockdb -aux_files $(MODULE)/db/sqlc=db/sqlc/querier.go
+
+.PHONY: createdb postgres dropdb migrateup migratedown sqlc test server mock
