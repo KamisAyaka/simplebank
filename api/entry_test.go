@@ -22,8 +22,8 @@ func TestGetEntryAPI(t *testing.T) {
 	entry := randomEntry()
 
 	testCases := []struct {
-		name          string
-		entryID       int64
+		name    string
+		entryID int64
 		// gomock 期望定义：接口调用签名和返回结果。
 		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
@@ -81,7 +81,7 @@ func TestGetEntryAPI(t *testing.T) {
 			store := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(store)
 
-			server := NewServer(store)
+			server := newTestServer(t, store)
 			recorder := httptest.NewRecorder()
 
 			url := fmt.Sprintf("/entries/%d", tc.entryID)
@@ -164,7 +164,7 @@ func TestListEntriesAPI(t *testing.T) {
 			store := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(store)
 
-			server := NewServer(store)
+			server := newTestServer(t, store)
 			recorder := httptest.NewRecorder()
 
 			url := fmt.Sprintf("/entries?account_id=%d&page_id=%d&page_size=%d", tc.accountID, tc.pageID, tc.pageSize)
