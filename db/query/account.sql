@@ -21,9 +21,10 @@ FOR NO KEY UPDATE;
 
 -- name: ListAccounts :many
 SELECT * FROM accounts
+WHERE owner = $1
 ORDER BY id
-LIMIT $1
-OFFSET $2; -- 这是偏移量，相当于偏移多少页之后才开始数
+LIMIT $2
+OFFSET $3; -- 这是偏移量，相当于偏移多少页之后才开始数
 
 -- name: UpdateAccount :one
 UPDATE accounts
