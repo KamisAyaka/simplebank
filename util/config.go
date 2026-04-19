@@ -9,11 +9,12 @@ import (
 )
 
 type Config struct {
-	DBDriver            string        `mapstructure:"DB_DRIVER"`
-	DBSource            string        `mapstructure:"DB_SOURCE"`
-	ServerAddress       string        `mapstructure:"SERVER_ADDRESS"`
-	TokenSymmetricKey   string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
-	AccessTokenDuration time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
+	DBDriver             string        `mapstructure:"DB_DRIVER"`
+	DBSource             string        `mapstructure:"DB_SOURCE"`
+	ServerAddress        string        `mapstructure:"SERVER_ADDRESS"`
+	TokenSymmetricKey    string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
+	AccessTokenDuration  time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
+	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
 }
 
 func LoadConfig(path string) (config Config, err error) {
@@ -23,7 +24,14 @@ func LoadConfig(path string) (config Config, err error) {
 	v.SetConfigType("env")
 
 	v.AutomaticEnv()
-	for _, key := range []string{"DB_DRIVER", "DB_SOURCE", "SERVER_ADDRESS"} {
+	for _, key := range []string{
+		"DB_DRIVER",
+		"DB_SOURCE",
+		"SERVER_ADDRESS",
+		"TOKEN_SYMMETRIC_KEY",
+		"ACCESS_TOKEN_DURATION",
+		"REFRESH_TOKEN_DURATION",
+	} {
 		if bindErr := v.BindEnv(key); bindErr != nil {
 			return config, bindErr
 		}
@@ -38,12 +46,20 @@ func LoadConfig(path string) (config Config, err error) {
 		}
 	}
 	config = Config{
-		DBDriver:      v.GetString("DB_DRIVER"),
-		DBSource:      v.GetString("DB_SOURCE"),
-		ServerAddress: v.GetString("SERVER_ADDRESS"),
+		DBDriver:             v.GetString("DB_DRIVER"),
+		DBSource:             v.GetString("DB_SOURCE"),
+		ServerAddress:        v.GetString("SERVER_ADDRESS"),
+		TokenSymmetricKey:    v.GetString("TOKEN_SYMMETRIC_KEY"),
+		AccessTokenDuration:  v.GetDuration("ACCESS_TOKEN_DURATION"),
+		RefreshTokenDuration: v.GetDuration("REFRESH_TOKEN_DURATION"),
 	}
-	if config.DBDriver == "" || config.DBSource == "" || config.ServerAddress == "" {
-		return config, fmt.Errorf("missing required config: DB_DRIVER/DB_SOURCE/SERVER_ADDRESS")
+	if config.DBDriver == "" ||
+		config.DBSource == "" ||
+		config.ServerAddress == "" ||
+		config.TokenSymmetricKey == "" ||
+		config.AccessTokenDuration <= 0 ||
+		config.RefreshTokenDuration <= 0 {
+		return config, fmt.Errorf("missing required config: DB_DRIVER/DB_SOURCE/SERVER_ADDRESS/TOKEN_SYMMETRIC_KEY/ACCESS_TOKEN_DURATION/REFRESH_TOKEN_DURATION")
 	}
 	return config, nil
 }
