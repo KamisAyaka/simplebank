@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>SimpleBank Swagger UI</title>
+    <link rel="stylesheet" href="/swagger/static/swagger-ui.css" />
+  </head>
+  <body>
+    <div id="swagger-ui"></div>
+    <script src="/swagger/static/swagger-ui-bundle.js"></script>
+    <script>
+      SwaggerUIBundle({
+        url: "/swagger/simple_bank.swagger.json",
+        dom_id: "#swagger-ui"
+      });
+    </script>
+  </body>
+</html>

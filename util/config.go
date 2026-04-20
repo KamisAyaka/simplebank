@@ -11,7 +11,8 @@ import (
 type Config struct {
 	DBDriver             string        `mapstructure:"DB_DRIVER"`
 	DBSource             string        `mapstructure:"DB_SOURCE"`
-	ServerAddress        string        `mapstructure:"SERVER_ADDRESS"`
+	HTTPServerAddress    string        `mapstructure:"HTTP_SERVER_ADDRESS"`
+	GRPCServerAddress    string        `mapstructure:"GRPC_SERVER_ADDRESS"`
 	TokenSymmetricKey    string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
 	AccessTokenDuration  time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
@@ -27,7 +28,8 @@ func LoadConfig(path string) (config Config, err error) {
 	for _, key := range []string{
 		"DB_DRIVER",
 		"DB_SOURCE",
-		"SERVER_ADDRESS",
+		"HTTP_SERVER_ADDRESS",
+		"GRPC_SERVER_ADDRESS",
 		"TOKEN_SYMMETRIC_KEY",
 		"ACCESS_TOKEN_DURATION",
 		"REFRESH_TOKEN_DURATION",
@@ -48,18 +50,20 @@ func LoadConfig(path string) (config Config, err error) {
 	config = Config{
 		DBDriver:             v.GetString("DB_DRIVER"),
 		DBSource:             v.GetString("DB_SOURCE"),
-		ServerAddress:        v.GetString("SERVER_ADDRESS"),
+		HTTPServerAddress:    v.GetString("HTTP_SERVER_ADDRESS"),
+		GRPCServerAddress:    v.GetString("GRPC_SERVER_ADDRESS"),
 		TokenSymmetricKey:    v.GetString("TOKEN_SYMMETRIC_KEY"),
 		AccessTokenDuration:  v.GetDuration("ACCESS_TOKEN_DURATION"),
 		RefreshTokenDuration: v.GetDuration("REFRESH_TOKEN_DURATION"),
 	}
 	if config.DBDriver == "" ||
 		config.DBSource == "" ||
-		config.ServerAddress == "" ||
+		config.HTTPServerAddress == "" ||
+		config.GRPCServerAddress == "" ||
 		config.TokenSymmetricKey == "" ||
 		config.AccessTokenDuration <= 0 ||
 		config.RefreshTokenDuration <= 0 {
-		return config, fmt.Errorf("missing required config: DB_DRIVER/DB_SOURCE/SERVER_ADDRESS/TOKEN_SYMMETRIC_KEY/ACCESS_TOKEN_DURATION/REFRESH_TOKEN_DURATION")
+		return config, fmt.Errorf("missing required config: DB_DRIVER/DB_SOURCE/HTTP_SERVER_ADDRESS/GRPC_SERVER_ADDRESS/TOKEN_SYMMETRIC_KEY/ACCESS_TOKEN_DURATION/REFRESH_TOKEN_DURATION")
 	}
 	return config, nil
 }

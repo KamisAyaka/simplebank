@@ -13,7 +13,8 @@ func TestLoadConfig_LoadsRefreshTokenDuration(t *testing.T) {
 	dir := t.TempDir()
 	content := `DB_DRIVER=postgres
 DB_SOURCE=postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable
-SERVER_ADDRESS=0.0.0.0:8080
+HTTP_SERVER_ADDRESS=0.0.0.0:8080
+GRPC_SERVER_ADDRESS=0.0.0.0:9090
 TOKEN_SYMMETRIC_KEY=12345678901234567890123456789012
 ACCESS_TOKEN_DURATION=15m
 REFRESH_TOKEN_DURATION=24h
@@ -25,6 +26,8 @@ REFRESH_TOKEN_DURATION=24h
 
 	config, err := LoadConfig(dir)
 	require.NoError(t, err)
+	require.Equal(t, "0.0.0.0:8080", config.HTTPServerAddress)
+	require.Equal(t, "0.0.0.0:9090", config.GRPCServerAddress)
 	require.Equal(t, 15*time.Minute, config.AccessTokenDuration)
 	require.Equal(t, 24*time.Hour, config.RefreshTokenDuration)
 }
