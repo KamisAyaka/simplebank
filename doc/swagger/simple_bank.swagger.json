@@ -23,8 +23,6 @@
   "paths": {
     "/v1/create_user": {
       "post": {
-        "summary": "CreateUser 创建新用户账号。",
-        "description": "HTTP:\n  POST /v1/create_user\nBody:\n  CreateUserRequest（username、password、full_name、email）\n\n常见错误：\n- ALREADY_EXISTS: 用户名或邮箱已存在\n- INTERNAL: 服务内部错误",
         "operationId": "SimpleBank_CreateUser",
         "responses": {
           "200": {
@@ -57,8 +55,6 @@
     },
     "/v1/login_user": {
       "post": {
-        "summary": "LoginUser 用户登录并签发 token。",
-        "description": "HTTP:\n  POST /v1/login_user\nBody:\n  LoginUserRequest（username、password）\n\n返回：\n- access_token / refresh_token\n- token 过期时间\n- 用户基础信息\n\n常见错误：\n- NOT_FOUND: 用户不存在\n- UNAUTHENTICATED: 密码错误\n- INTERNAL: 会话创建失败或服务内部错误",
         "operationId": "SimpleBank_LoginUser",
         "responses": {
           "200": {
@@ -81,6 +77,38 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/pbLoginUserRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SimpleBank"
+        ]
+      }
+    },
+    "/v1/update_user": {
+      "patch": {
+        "operationId": "SimpleBank_UpdateUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pbUpdateUserResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pbUpdateUserRequest"
             }
           }
         ],
@@ -149,6 +177,31 @@
         "refreshTokenExpiresAt": {
           "type": "string",
           "format": "date-time"
+        }
+      }
+    },
+    "pbUpdateUserRequest": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "pbUpdateUserResponse": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "$ref": "#/definitions/pbUser"
         }
       }
     },

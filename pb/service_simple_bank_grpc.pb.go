@@ -20,49 +20,16 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	SimpleBank_CreateUser_FullMethodName = "/pb.SimpleBank/CreateUser"
+	SimpleBank_UpdateUser_FullMethodName = "/pb.SimpleBank/UpdateUser"
 	SimpleBank_LoginUser_FullMethodName  = "/pb.SimpleBank/LoginUser"
 )
 
 // SimpleBankClient is the client API for SimpleBank service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-// SimpleBank 提供用户注册与登录相关接口。
-// 这些注释会被 OpenAPI/Swagger 生成器用作接口文档说明。
 type SimpleBankClient interface {
-	// CreateUser 创建新用户账号。
-	//
-	// HTTP:
-	//
-	//	POST /v1/create_user
-	//
-	// Body:
-	//
-	//	CreateUserRequest（username、password、full_name、email）
-	//
-	// 常见错误：
-	// - ALREADY_EXISTS: 用户名或邮箱已存在
-	// - INTERNAL: 服务内部错误
 	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
-	// LoginUser 用户登录并签发 token。
-	//
-	// HTTP:
-	//
-	//	POST /v1/login_user
-	//
-	// Body:
-	//
-	//	LoginUserRequest（username、password）
-	//
-	// 返回：
-	// - access_token / refresh_token
-	// - token 过期时间
-	// - 用户基础信息
-	//
-	// 常见错误：
-	// - NOT_FOUND: 用户不存在
-	// - UNAUTHENTICATED: 密码错误
-	// - INTERNAL: 会话创建失败或服务内部错误
+	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
 	LoginUser(ctx context.Context, in *LoginUserRequest, opts ...grpc.CallOption) (*LoginUserResponse, error)
 }
 
@@ -84,6 +51,16 @@ func (c *simpleBankClient) CreateUser(ctx context.Context, in *CreateUserRequest
 	return out, nil
 }
 
+func (c *simpleBankClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateUserResponse)
+	err := c.cc.Invoke(ctx, SimpleBank_UpdateUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *simpleBankClient) LoginUser(ctx context.Context, in *LoginUserRequest, opts ...grpc.CallOption) (*LoginUserResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LoginUserResponse)
@@ -97,43 +74,9 @@ func (c *simpleBankClient) LoginUser(ctx context.Context, in *LoginUserRequest, 
 // SimpleBankServer is the server API for SimpleBank service.
 // All implementations must embed UnimplementedSimpleBankServer
 // for forward compatibility.
-//
-// SimpleBank 提供用户注册与登录相关接口。
-// 这些注释会被 OpenAPI/Swagger 生成器用作接口文档说明。
 type SimpleBankServer interface {
-	// CreateUser 创建新用户账号。
-	//
-	// HTTP:
-	//
-	//	POST /v1/create_user
-	//
-	// Body:
-	//
-	//	CreateUserRequest（username、password、full_name、email）
-	//
-	// 常见错误：
-	// - ALREADY_EXISTS: 用户名或邮箱已存在
-	// - INTERNAL: 服务内部错误
 	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
-	// LoginUser 用户登录并签发 token。
-	//
-	// HTTP:
-	//
-	//	POST /v1/login_user
-	//
-	// Body:
-	//
-	//	LoginUserRequest（username、password）
-	//
-	// 返回：
-	// - access_token / refresh_token
-	// - token 过期时间
-	// - 用户基础信息
-	//
-	// 常见错误：
-	// - NOT_FOUND: 用户不存在
-	// - UNAUTHENTICATED: 密码错误
-	// - INTERNAL: 会话创建失败或服务内部错误
+	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
 	LoginUser(context.Context, *LoginUserRequest) (*LoginUserResponse, error)
 	mustEmbedUnimplementedSimpleBankServer()
 }
@@ -147,6 +90,9 @@ type UnimplementedSimpleBankServer struct{}
 
 func (UnimplementedSimpleBankServer) CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateUser not implemented")
+}
+func (UnimplementedSimpleBankServer) UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateUser not implemented")
 }
 func (UnimplementedSimpleBankServer) LoginUser(context.Context, *LoginUserRequest) (*LoginUserResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method LoginUser not implemented")
@@ -190,6 +136,24 @@ func _SimpleBank_CreateUser_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SimpleBank_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimpleBankServer).UpdateUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SimpleBank_UpdateUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimpleBankServer).UpdateUser(ctx, req.(*UpdateUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SimpleBank_LoginUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LoginUserRequest)
 	if err := dec(in); err != nil {
@@ -218,6 +182,10 @@ var SimpleBank_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateUser",
 			Handler:    _SimpleBank_CreateUser_Handler,
+		},
+		{
+			MethodName: "UpdateUser",
+			Handler:    _SimpleBank_UpdateUser_Handler,
 		},
 		{
 			MethodName: "LoginUser",

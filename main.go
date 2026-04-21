@@ -9,11 +9,16 @@ import (
 
 	"github.com/KamisAyaka/simplebank/api"
 	db "github.com/KamisAyaka/simplebank/db/sqlc"
+	_ "github.com/KamisAyaka/simplebank/doc/statik"
 	"github.com/KamisAyaka/simplebank/gapi"
 	"github.com/KamisAyaka/simplebank/pb"
 	"github.com/KamisAyaka/simplebank/util"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	_ "github.com/lib/pq"
+	"github.com/rakyll/statik/fs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -34,11 +39,28 @@ func main() {
 		log.Fatal("cannot ping db:", err)
 	}
 
+	runDBMigration(config.MigrationURL, config.DBSource)
+
 	store := db.NewStore(conn)
 	go runGatewayServer(config, store)
 	runGrpcServer(config, store)
 	//runGinServer(config,store)
 
+}
+
+func runDBMigration(migrationURL string, dbSource string) {
+	migration, err := migrate.New(migrationURL, dbSource)
+	if err != nil {
+		log.Fatal("cannot create new migrate instance:", err)
+	}
+	if err := migration.Up(); err != nil {
+		if err == migrate.ErrNoChange {
+			log.Println("no new db migration")
+			return
+		}
+		log.Fatal("failed to run migrate up:", err)
+	}
+	log.Println("db migrated successfully")
 }
 
 func runGrpcServer(config util.Config, store db.Store) {
@@ -87,11 +109,15 @@ func runGatewayServer(config util.Config, store db.Store) {
 	}
 
 	httpMux := http.NewServeMux()
-	httpMux.HandleFunc("/swagger", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/swagger/", http.StatusMovedPermanently)
-	})
-	httpMux.Handle("/swagger/", http.StripPrefix("/swagger/", http.FileServer(http.Dir("doc/swagger"))))
 	httpMux.Handle("/", grpcMux)
+
+	statikFS, err := fs.New()
+	if err != nil {
+		log.Fatal("cannot create statik fs")
+	}
+
+	swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(statikFS))
+	httpMux.Handle("/swagger/", swaggerHandler)
 
 	listener, err := net.Listen("tcp", config.HTTPServerAddress)
 	if err != nil {

@@ -2,7 +2,6 @@ package util
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/spf13/viper"
@@ -11,6 +10,7 @@ import (
 type Config struct {
 	DBDriver             string        `mapstructure:"DB_DRIVER"`
 	DBSource             string        `mapstructure:"DB_SOURCE"`
+	MigrationURL         string        `mapstructure:"MIGRATION_URL"`
 	HTTPServerAddress    string        `mapstructure:"HTTP_SERVER_ADDRESS"`
 	GRPCServerAddress    string        `mapstructure:"GRPC_SERVER_ADDRESS"`
 	TokenSymmetricKey    string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
@@ -28,6 +28,7 @@ func LoadConfig(path string) (config Config, err error) {
 	for _, key := range []string{
 		"DB_DRIVER",
 		"DB_SOURCE",
+		"MIGRATION_URL",
 		"HTTP_SERVER_ADDRESS",
 		"GRPC_SERVER_ADDRESS",
 		"TOKEN_SYMMETRIC_KEY",
@@ -50,20 +51,13 @@ func LoadConfig(path string) (config Config, err error) {
 	config = Config{
 		DBDriver:             v.GetString("DB_DRIVER"),
 		DBSource:             v.GetString("DB_SOURCE"),
+		MigrationURL:         v.GetString("MIGRATION_URL"),
 		HTTPServerAddress:    v.GetString("HTTP_SERVER_ADDRESS"),
 		GRPCServerAddress:    v.GetString("GRPC_SERVER_ADDRESS"),
 		TokenSymmetricKey:    v.GetString("TOKEN_SYMMETRIC_KEY"),
 		AccessTokenDuration:  v.GetDuration("ACCESS_TOKEN_DURATION"),
 		RefreshTokenDuration: v.GetDuration("REFRESH_TOKEN_DURATION"),
 	}
-	if config.DBDriver == "" ||
-		config.DBSource == "" ||
-		config.HTTPServerAddress == "" ||
-		config.GRPCServerAddress == "" ||
-		config.TokenSymmetricKey == "" ||
-		config.AccessTokenDuration <= 0 ||
-		config.RefreshTokenDuration <= 0 {
-		return config, fmt.Errorf("missing required config: DB_DRIVER/DB_SOURCE/HTTP_SERVER_ADDRESS/GRPC_SERVER_ADDRESS/TOKEN_SYMMETRIC_KEY/ACCESS_TOKEN_DURATION/REFRESH_TOKEN_DURATION")
-	}
+
 	return config, nil
 }

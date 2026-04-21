@@ -29,6 +29,13 @@ type Querier interface {
 	ListTransfers(ctx context.Context, arg ListTransfersParams) ([]Transfer, error)
 	// 这是偏移量，相当于偏移多少页之后才开始数
 	UpdateAccount(ctx context.Context, arg UpdateAccountParams) (Account, error)
+	// UpdateUser 支持“部分更新”：
+	// 1) sqlc.narg(field) 会生成可空参数（sql.NullString）。
+	// 2) COALESCE(a, b) 的意思是：a 不为 NULL 就用 a，否则用 b。
+	// 3) 组合起来就是：
+	//    - 传了新值 -> 更新该字段
+	//    - 没传值(NULL) -> 保留数据库原值
+	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -5,6 +5,7 @@ package pb;
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 import "rpc_create_user.proto";
+import "rpc_update_user.proto";
 import "rpc_login_user.proto";
 
 option go_package= "github.com/KamisAyaka/simplebank/pb";
@@ -21,42 +22,20 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   };
 };
 
-// SimpleBank 提供用户注册与登录相关接口。
-// 这些注释会被 OpenAPI/Swagger 生成器用作接口文档说明。
+
 service SimpleBank {
-  // CreateUser 创建新用户账号。
-  //
-  // HTTP:
-  //   POST /v1/create_user
-  // Body:
-  //   CreateUserRequest（username、password、full_name、email）
-  //
-  // 常见错误：
-  // - ALREADY_EXISTS: 用户名或邮箱已存在
-  // - INTERNAL: 服务内部错误
   rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {
     option (google.api.http) = {
       post: "/v1/create_user"
       body: "*"
     };
   }
-
-  // LoginUser 用户登录并签发 token。
-  //
-  // HTTP:
-  //   POST /v1/login_user
-  // Body:
-  //   LoginUserRequest（username、password）
-  //
-  // 返回：
-  // - access_token / refresh_token
-  // - token 过期时间
-  // - 用户基础信息
-  //
-  // 常见错误：
-  // - NOT_FOUND: 用户不存在
-  // - UNAUTHENTICATED: 密码错误
-  // - INTERNAL: 会话创建失败或服务内部错误
+  rpc UpdateUser (UpdateUserRequest) returns (UpdateUserResponse) {
+    option (google.api.http) = {
+      patch: "/v1/update_user"
+      body: "*"
+    };
+  }
   rpc LoginUser (LoginUserRequest) returns (LoginUserResponse) {
     option (google.api.http) = {
       post: "/v1/login_user"
