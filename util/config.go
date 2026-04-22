@@ -13,6 +13,7 @@ type Config struct {
 	DBDriver             string        `mapstructure:"DB_DRIVER"`
 	DBSource             string        `mapstructure:"DB_SOURCE"`
 	MigrationURL         string        `mapstructure:"MIGRATION_URL"`
+	RedisAddress         string        `mapstructure:"REDIS_ADDRESS"`
 	HTTPServerAddress    string        `mapstructure:"HTTP_SERVER_ADDRESS"`
 	GRPCServerAddress    string        `mapstructure:"GRPC_SERVER_ADDRESS"`
 	TokenSymmetricKey    string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
@@ -32,6 +33,7 @@ func LoadConfig(path string) (config Config, err error) {
 		"DB_DRIVER",
 		"DB_SOURCE",
 		"MIGRATION_URL",
+		"REDIS_ADDRESS",
 		"HTTP_SERVER_ADDRESS",
 		"GRPC_SERVER_ADDRESS",
 		"TOKEN_SYMMETRIC_KEY",
@@ -56,6 +58,7 @@ func LoadConfig(path string) (config Config, err error) {
 		DBDriver:             v.GetString("DB_DRIVER"),
 		DBSource:             v.GetString("DB_SOURCE"),
 		MigrationURL:         v.GetString("MIGRATION_URL"),
+		RedisAddress:         v.GetString("REDIS_ADDRESS"),
 		HTTPServerAddress:    v.GetString("HTTP_SERVER_ADDRESS"),
 		GRPCServerAddress:    v.GetString("GRPC_SERVER_ADDRESS"),
 		TokenSymmetricKey:    v.GetString("TOKEN_SYMMETRIC_KEY"),
