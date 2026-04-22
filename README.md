@@ -1,181 +1,176 @@
 # SimpleBank
 
-一个基于 Go + Gin + PostgreSQL + sqlc 的后端练习项目，支持用户、账户、流水、转账等功能，并包含鉴权中间件与测试。
+一个基于 Go + PostgreSQL + gRPC + gRPC-Gateway + sqlc 的后端项目。
 
-## 运行环境
+当前仓库默认启动：
+- gRPC 服务（`GRPC_SERVER_ADDRESS`，默认 `:9090`）
+- HTTP Gateway（`HTTP_SERVER_ADDRESS`，默认 `:8080`）
+- Asynq 任务处理器（依赖 Redis）
 
-- Go `1.26+`
-- Docker / Docker Compose
-- PostgreSQL（本地模式可选）
-- `migrate` CLI（本地迁移用）
-- `sqlc`（生成 SQL 对应 Go 代码）
-- `mockgen`（生成接口 mock）
+项目包含用户创建、登录、更新用户信息，并在创建用户后投递“发送邮箱验证码”异步任务。
 
-## 配置文件
+## 技术栈
 
-- 本地运行使用：`app.env`
-- 镜像内默认配置：`app.docker.env`
+- Go
+- PostgreSQL
+- gRPC / Protocol Buffers
+- gRPC-Gateway
+- sqlc
+- golang-migrate
+- Asynq + Redis
+- Zerolog
+- Swagger(OpenAPI v2)
 
-主要配置项：
+## 目录结构
 
+- `main.go`：应用入口（加载配置、跑迁移、启动 gRPC/Gateway/Worker）
+- `util/`：配置与通用工具
+- `gapi/`：gRPC API 实现
+- `db/migration/`：SQL 迁移
+- `db/query/`：sqlc 查询定义
+- `db/sqlc/`：sqlc 生成代码与事务逻辑（含 `CreateUserTx`）
+- `worker/`：Asynq 任务分发与处理
+- `proto/`：proto 定义
+- `pb/`：protobuf / gateway 生成代码
+- `doc/swagger/`：Swagger JSON 与静态资源
+- `doc/statik/`：嵌入 Swagger 资源（由 `statik` 生成）
+
+## 环境要求
+
+- Go 1.26+
+- PostgreSQL
+- Redis
+- protoc
+- `protoc-gen-go`、`protoc-gen-go-grpc`、`protoc-gen-grpc-gateway`、`protoc-gen-openapiv2`
+- `sqlc`
+- `migrate` CLI
+- `mockgen`
+- `statik`
+
+## 配置
+
+本地默认读取 `app.env`，容器默认读取 `app.docker.env`（复制到容器内 `/app/app.env`）。
+
+关键配置项：
+
+- `ENVIRONMENT`：`development/dev` 时使用 zerolog ConsoleWriter，其他环境输出 JSON 日志
 - `DB_DRIVER`
 - `DB_SOURCE`
-- `SERVER_ADDRESS`
+- `MIGRATION_URL`（本地通常 `file://db/migration`，容器通常 `file:///app/db/migration`）
+- `REDIS_ADDRESS`（例如 `localhost:6379`）
+- `HTTP_SERVER_ADDRESS`
+- `GRPC_SERVER_ADDRESS`
 - `TOKEN_SYMMETRIC_KEY`（至少 32 位）
 - `ACCESS_TOKEN_DURATION`
 - `REFRESH_TOKEN_DURATION`
 
-## 快速开始（推荐：Docker Compose）
+## 本地快速启动
 
-```bash
-docker compose up --build
-```
-
-启动后：
-
-- API: `http://localhost:8080`
-- Postgres: `localhost:5432`（用户名/密码/库见 `docker-compose.yaml`）
-
-停止：
-
-```bash
-docker compose down
-```
-
-删除数据卷（重置数据库）：
-
-```bash
-docker compose down -v
-```
-
-## 本地开发启动
-
-1. 启动 PostgreSQL 容器（Makefile 方案）：
+1. 启动 PostgreSQL
 
 ```bash
 make postgres
 make createdb
 ```
 
-2. 执行迁移：
+2. 启动 Redis
 
 ```bash
-make migrateup
+make redis
 ```
 
-3. 启动服务：
+3. 启动服务
 
 ```bash
 make server
 ```
 
-## 常用命令
+说明：
+- `main.go` 会在启动时自动执行 `migrate up`。
+- 没有新迁移时会打印 `no new db migration`。
 
-### 数据库
+## Docker Compose
 
 ```bash
-make createdb
-make dropdb
+docker compose up --build
+```
+
+当前 `docker-compose.yaml` 只包含 `postgres` 与 `api` 服务。
+如果你要跑异步任务链路，请确保 Redis 可达并给 `api` 配置 `REDIS_ADDRESS`。
+
+## API（当前）
+
+Service: `pb.SimpleBank`
+
+- `CreateUser`
+  - gRPC: `/pb.SimpleBank/CreateUser`
+  - HTTP: `POST /v1/create_user`
+- `UpdateUser`
+  - gRPC: `/pb.SimpleBank/UpdateUser`
+  - HTTP: `PATCH /v1/update_user`
+- `LoginUser`
+  - gRPC: `/pb.SimpleBank/LoginUser`
+  - HTTP: `POST /v1/login_user`
+
+## Swagger
+
+先生成 swagger 文件和嵌入资源：
+
+```bash
+make proto
+```
+
+再启动服务后访问：
+
+- `http://localhost:8080/swagger/`
+
+说明：
+- Gateway 使用嵌入的静态资源（`doc/statik`），不是运行时外部 CDN。
+- `make proto` 会先生成 `doc/swagger/*.swagger.json`，再通过 `statik` 生成 `doc/statik`。
+
+## 常用命令
+
+数据库与迁移：
+
+```bash
 make migrateup
 make migrateup1
 make migratedown
 make migratedown1
 ```
 
-### 迁移（migrate）进阶指令
-
-安装 `migrate`（macOS）：
-
-```bash
-brew install golang-migrate
-```
-
-创建新的迁移文件（会生成 up/down 两个文件）：
-
-```bash
-migrate create -ext sql -dir db/migration -seq add_xxx_table
-```
-
-手动执行迁移（不走 Makefile）：
-
-```bash
-migrate -path db/migration -database "postgresql://root:secret@localhost:5433/simple_bank?sslmode=disable" -verbose up
-migrate -path db/migration -database "postgresql://root:secret@localhost:5433/simple_bank?sslmode=disable" -verbose down
-```
-
-只迁移/回滚一步：
-
-```bash
-migrate -path db/migration -database "postgresql://root:secret@localhost:5433/simple_bank?sslmode=disable" -verbose up 1
-migrate -path db/migration -database "postgresql://root:secret@localhost:5433/simple_bank?sslmode=disable" -verbose down 1
-```
-
-### 代码生成
+代码生成：
 
 ```bash
 make sqlc
 make mock
+make proto
 ```
 
-### 测试
+测试：
 
 ```bash
 make test
 go test ./... -count=1
 ```
 
-### Docker
+## 一致性说明（创建用户 + 异步任务）
 
-```bash
-docker build -t simplebank:latest .
-docker run --rm --name simplebank -p 8080:8080 simplebank:latest
-```
+`CreateUser` 目前通过 `db/sqlc` 的 `CreateUserTx` 处理：
 
-### Docker Compose 迁移指令
+- 在同一个数据库事务流程中先创建用户
+- 再执行任务分发回调（投递 Asynq 任务）
+- 如果任务分发失败，则返回错误并回滚用户创建
 
-`api` 容器启动时会自动执行迁移（见 `start.sh`）。
-
-手动在容器里执行迁移：
-
-```bash
-docker compose exec api /app/migrate -path /app/migration -database "postgresql://root:secret@postgres:5432/simple_bank?sslmode=disable" -verbose up
-docker compose exec api /app/migrate -path /app/migration -database "postgresql://root:secret@postgres:5432/simple_bank?sslmode=disable" -verbose down 1
-```
-
-## 常用 API 调试
-
-### 注册用户
-
-```bash
-curl -i -X POST http://localhost:8080/users \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username":"tom",
-    "password":"123456",
-    "full_name":"Tom Jerry",
-    "email":"tom@example.com"
-  }'
-```
-
-### 登录
-
-```bash
-curl -i -X POST http://localhost:8080/users/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username":"tom",
-    "password":"123456"
-  }'
-```
-
-登录后拿到 `access_token`，访问受保护接口时加：
-
-```bash
-Authorization: Bearer <access_token>
-```
+这能避免“用户已落库但任务未分发”的窗口问题。
 
 ## 常见问题
 
-- `404 /users/login`：你发的是 `GET`，正确是 `POST /users/login`。
-- `invalid key size`：`TOKEN_SYMMETRIC_KEY` 长度不足 32。
-- `port is already allocated`：端口冲突，先停掉占用端口的容器/服务。
+- `failed to create session`
+  - 请先检查 `sessions` 表约束与 `client_ip` 冲突（历史数据/旧逻辑可能导致）。
+- `invalid parameters`
+  - 检查请求 JSON 是否合法（特别是末尾多余逗号）。
+- `cannot create new migrate instance: URL cannot be empty`
+  - 检查 `MIGRATION_URL` 是否正确配置。
+- `swagger 404`
+  - 确认服务启动成功，并访问 `http://localhost:8080/swagger/`。
