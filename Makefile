@@ -53,7 +53,4 @@ proto:
 		proto/*.proto
 		statik -src=./doc/swagger -dest=./doc
 
-evans:
-	evans --host $(EVANS_HOST) --port $(EVANS_PORT) -r repl --package $(EVANS_PACKAGE) --service $(EVANS_SERVICE)
-
 .PHONY: createdb postgres dropdb migrateup migratedown sqlc test server mock migratedown1 migrateup1 proto evans

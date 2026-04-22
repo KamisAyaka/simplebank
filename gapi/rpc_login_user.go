@@ -49,12 +49,22 @@ func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (
 	}
 
 	mtdt := server.extractMetadata(ctx)
+	clientIP := mtdt.ClientIP
+	// sessions.client_ip 当前有 UNIQUE 约束。
+	// 在同一长连接内重复登录时，peer addr 可能不变，导致插入冲突。
+	// 这里兜底使用本次登录唯一的 refresh token ID，确保可创建会话。
+	if clientIP == "" {
+		clientIP = refreshPayload.ID.String()
+	}
+	if clientIP == mtdt.ClientIP {
+		clientIP = clientIP + "|" + refreshPayload.ID.String()
+	}
 	session, err := server.store.CreateSession(ctx, db.CreateSessionParams{
 		ID:           refreshPayload.ID,
 		Username:     user.Username,
 		RefreshToken: refreshToken,
 		UserAgent:    mtdt.UserAgent,
-		ClientIp:     mtdt.ClientIP,
+		ClientIp:     clientIP,
 		IsBlocked:    false,
 		ExpiresAt:    refreshPayload.ExpiredAt,
 	})

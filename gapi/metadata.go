@@ -10,7 +10,7 @@ import (
 const (
 	grpcGatewayUserAgentHeader = "grpcgateway-user-agent"
 	userAgentHeader            = "user-agent"
-	xForwardedForHeader        = "x-forwarded-host"
+	xForwardedForHeader        = "x-forwarded-for"
 )
 
 type Metadata struct {

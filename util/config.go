@@ -2,12 +2,14 @@ package util
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
 )
 
 type Config struct {
+	Environment          string        `mapstructure:"ENVIRONMENT"`
 	DBDriver             string        `mapstructure:"DB_DRIVER"`
 	DBSource             string        `mapstructure:"DB_SOURCE"`
 	MigrationURL         string        `mapstructure:"MIGRATION_URL"`
@@ -26,6 +28,7 @@ func LoadConfig(path string) (config Config, err error) {
 
 	v.AutomaticEnv()
 	for _, key := range []string{
+		"ENVIRONMENT",
 		"DB_DRIVER",
 		"DB_SOURCE",
 		"MIGRATION_URL",
@@ -49,6 +52,7 @@ func LoadConfig(path string) (config Config, err error) {
 		}
 	}
 	config = Config{
+		Environment:          v.GetString("ENVIRONMENT"),
 		DBDriver:             v.GetString("DB_DRIVER"),
 		DBSource:             v.GetString("DB_SOURCE"),
 		MigrationURL:         v.GetString("MIGRATION_URL"),
@@ -57,6 +61,9 @@ func LoadConfig(path string) (config Config, err error) {
 		TokenSymmetricKey:    v.GetString("TOKEN_SYMMETRIC_KEY"),
 		AccessTokenDuration:  v.GetDuration("ACCESS_TOKEN_DURATION"),
 		RefreshTokenDuration: v.GetDuration("REFRESH_TOKEN_DURATION"),
+	}
+	if strings.TrimSpace(config.Environment) == "" {
+		config.Environment = "development"
 	}
 
 	return config, nil

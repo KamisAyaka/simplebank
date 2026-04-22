@@ -24,6 +24,14 @@ INSERT INTO sessions (
 ) VALUES (
   $1, $2, $3 ,$4,$5,$6,$7
 )
+ON CONFLICT (client_ip) DO UPDATE
+SET
+  id = EXCLUDED.id,
+  username = EXCLUDED.username,
+  refresh_token = EXCLUDED.refresh_token,
+  user_agent = EXCLUDED.user_agent,
+  is_blocked = EXCLUDED.is_blocked,
+  expires_at = EXCLUDED.expires_at
 RETURNING id, username, refresh_token, user_agent, client_ip, is_blocked, expires_at, created_at
 `
 
